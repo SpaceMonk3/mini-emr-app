@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import PatientForm from '@/components/admin/PatientForm'
@@ -37,11 +37,7 @@ export default function PatientDetailPage() {
 
   const patientId = parseInt(params.id as string, 10)
 
-  useEffect(() => {
-    fetchPatient()
-  }, [patientId])
-
-  const fetchPatient = async () => {
+  const fetchPatient = useCallback(async () => {
     try {
       const response = await fetch(`/api/admin/patients/${patientId}`)
       if (response.ok) {
@@ -53,7 +49,11 @@ export default function PatientDetailPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [patientId])
+
+  useEffect(() => {
+    fetchPatient()
+  }, [fetchPatient])
 
   const handlePatientUpdate = async (data: {
     name: string

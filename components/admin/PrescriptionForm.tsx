@@ -51,7 +51,7 @@ export default function PrescriptionForm({
           // Medications will be set via props
         })
     }
-  }, [])
+  }, [medications.length])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
