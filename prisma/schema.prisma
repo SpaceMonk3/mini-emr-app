@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int            @id @default(autoincrement())
+  name          String
+  email         String         @unique
+  passwordHash  String         @map("password_hash")
+  appointments  Appointment[]
+  prescriptions Prescription[]
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Appointment {
+  id            Int       @id @default(autoincrement())
+  userId        Int       @map("user_id")
+  provider      String
+  datetime      DateTime
+  repeatSchedule String?  @map("repeat_schedule") // "weekly", "monthly", null for one-time
+  endDate       DateTime? @map("end_date") // For ending recurring appointments
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@map("appointments")
+}
+
+model Prescription {
+  id             Int      @id @default(autoincrement())
+  userId         Int      @map("user_id")
+  medication     String
+  dosage         String
+  quantity       Int
+  refillOn       DateTime @map("refill_on")
+  refillSchedule String   @map("refill_schedule") // "monthly", "weekly", etc.
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("prescriptions")
+}
+
+model Medication {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  @@map("medications")
+}
+
+model Dosage {
+  id     Int    @id @default(autoincrement())
+  amount String @unique
+
+  @@map("dosages")
+}
