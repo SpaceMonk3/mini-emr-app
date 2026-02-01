@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { format } from 'date-fns'
 import { getSessionUserId } from '@/lib/auth'
 import { getUserById, getPrescriptionsByUserId } from '@/lib/db'
+import { timestampToDate } from '@/lib/firestore'
 import { calculateRefillDates, addMonths } from '@/lib/dateUtils'
 import Navbar from '@/components/portal/Navbar'
 
@@ -23,7 +24,7 @@ async function getPrescriptions() {
 
   // Calculate all upcoming refills for each prescription
   const prescriptionsWithRefills = prescriptions.map(prescription => {
-    const refillOn = prescription.refillOn instanceof Date ? prescription.refillOn : new Date(prescription.refillOn)
+    const refillOn = timestampToDate(prescription.refillOn) || new Date()
     const refillDates = calculateRefillDates(
       refillOn,
       prescription.refillSchedule,

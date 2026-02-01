@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getSessionUserId } from '@/lib/auth'
 import { getUserById, getAppointmentsByUserId, getPrescriptionsByUserId } from '@/lib/db'
+import { timestampToDate } from '@/lib/firestore'
 import { calculateRecurringAppointments, calculateRefillDates, getAppointmentsInNext7Days, getRefillsInNext7Days, addMonths } from '@/lib/dateUtils'
 import DashboardSummary from '@/components/portal/DashboardSummary'
 import Navbar from '@/components/portal/Navbar'
@@ -25,8 +26,8 @@ async function getDashboardData() {
   // Calculate all upcoming appointments
   const allAppointments: Array<{ date: Date; provider: string; repeatSchedule: string | null }> = []
   for (const apt of appointments) {
-    const aptDate = apt.datetime instanceof Date ? apt.datetime : new Date(apt.datetime)
-    const endDate = apt.endDate ? (apt.endDate instanceof Date ? apt.endDate : new Date(apt.endDate)) : null
+    const aptDate = timestampToDate(apt.datetime) || new Date()
+    const endDate = apt.endDate ? timestampToDate(apt.endDate) : null
     const recurringDates = calculateRecurringAppointments(
       aptDate,
       apt.repeatSchedule,
@@ -54,7 +55,7 @@ async function getDashboardData() {
   // Calculate all upcoming refills
   const allRefills: Array<{ date: Date; medication: string; dosage: string; quantity: number }> = []
   for (const prescription of prescriptions) {
-    const refillOn = prescription.refillOn instanceof Date ? prescription.refillOn : new Date(prescription.refillOn)
+    const refillOn = timestampToDate(prescription.refillOn) || new Date()
     const refillDates = calculateRefillDates(
       refillOn,
       prescription.refillSchedule,
