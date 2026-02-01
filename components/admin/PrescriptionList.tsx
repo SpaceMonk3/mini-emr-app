@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import PrescriptionForm from './PrescriptionForm'
 
 interface Prescription {
-  id: number
+  id: string
   medication: string
   dosage: string
   quantity: number
@@ -15,7 +15,7 @@ interface Prescription {
 
 interface PrescriptionListProps {
   prescriptions: Prescription[]
-  userId: number
+  userId: string
   onUpdate: () => void
 }
 
@@ -24,7 +24,7 @@ export default function PrescriptionList({
   userId,
   onUpdate,
 }: PrescriptionListProps) {
-  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [medications, setMedications] = useState<string[]>([])
   const [dosages, setDosages] = useState<string[]>([])
@@ -38,12 +38,12 @@ export default function PrescriptionList({
       .then((data) => setDosages(data))
   }, [])
 
-  const handleEdit = (id: number) => {
+  const handleEdit = (id: string) => {
     setEditingId(id)
     setShowForm(true)
   }
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this prescription?')) return
 
     try {
@@ -59,7 +59,7 @@ export default function PrescriptionList({
   }
 
   const handleSubmit = async (data: {
-    userId: number
+    userId: string
     medication: string
     dosage: string
     quantity: number

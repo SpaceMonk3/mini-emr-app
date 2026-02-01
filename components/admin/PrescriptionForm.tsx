@@ -4,18 +4,18 @@ import { useState, useEffect } from 'react'
 
 interface PrescriptionFormProps {
   prescription?: {
-    id: number
+    id: string
     medication: string
     dosage: string
     quantity: number
     refillOn: string
     refillSchedule: string
   }
-  userId: number
+  userId: string
   medications: string[]
   dosages: string[]
   onSubmit: (data: {
-    userId: number
+    userId: string
     medication: string
     dosage: string
     quantity: number

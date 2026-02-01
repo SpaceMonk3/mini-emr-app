@@ -1,33 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
+import { getAppointmentById, updateAppointment, deleteAppointment } from '@/lib/db'
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const id = parseInt(params.id, 10)
-    if (isNaN(id)) {
-      return NextResponse.json({ error: 'Invalid appointment ID' }, { status: 400 })
-    }
+    const id = params.id
 
     const body = await request.json()
     const { provider, datetime, repeatSchedule, endDate } = body
 
-    const appointment = await prisma.appointment.update({
-      where: { id },
-      data: {
-        provider: provider !== undefined ? provider : undefined,
-        datetime: datetime ? new Date(datetime) : undefined,
-        repeatSchedule: repeatSchedule !== undefined ? repeatSchedule : undefined,
-        endDate: endDate !== undefined ? (endDate ? new Date(endDate) : null) : undefined,
-      },
-    })
+    // Check if appointment exists
+    const existing = await getAppointmentById(id)
+    if (!existing) {
+      return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
+    }
 
-    return NextResponse.json(appointment)
+    const updateData: any = {}
+    if (provider !== undefined) updateData.provider = provider
+    if (datetime !== undefined) updateData.datetime = datetime
+    if (repeatSchedule !== undefined) updateData.repeatSchedule = repeatSchedule
+    if (endDate !== undefined) updateData.endDate = endDate ? endDate : null
+
+    const appointment = await updateAppointment(id, updateData)
+
+    // Convert dates to ISO strings for response
+    const response = {
+      id: appointment.id,
+      userId: appointment.userId,
+      provider: appointment.provider,
+      datetime: appointment.datetime instanceof Date ? appointment.datetime.toISOString() : appointment.datetime,
+      repeatSchedule: appointment.repeatSchedule,
+      endDate: appointment.endDate ? (appointment.endDate instanceof Date ? appointment.endDate.toISOString() : appointment.endDate) : null,
+      createdAt: appointment.createdAt instanceof Date ? appointment.createdAt.toISOString() : appointment.createdAt,
+      updatedAt: appointment.updatedAt instanceof Date ? appointment.updatedAt.toISOString() : appointment.updatedAt,
+    }
+
+    return NextResponse.json(response)
   } catch (error: any) {
     console.error('Error updating appointment:', error)
-    if (error.code === 'P2025') {
+    if (error.message?.includes('not found')) {
       return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
     }
     return NextResponse.json(
@@ -42,21 +55,19 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const id = parseInt(params.id, 10)
-    if (isNaN(id)) {
-      return NextResponse.json({ error: 'Invalid appointment ID' }, { status: 400 })
+    const id = params.id
+
+    // Check if appointment exists
+    const existing = await getAppointmentById(id)
+    if (!existing) {
+      return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
     }
 
-    await prisma.appointment.delete({
-      where: { id },
-    })
+    await deleteAppointment(id)
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
     console.error('Error deleting appointment:', error)
-    if (error.code === 'P2025') {
-      return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
-    }
     return NextResponse.json(
       { error: 'Failed to delete appointment' },
       { status: 500 }

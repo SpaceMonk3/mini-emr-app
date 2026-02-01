@@ -6,7 +6,7 @@ import { format } from 'date-fns'
 import PatientForm from '@/components/admin/PatientForm'
 
 interface Patient {
-  id: number
+  id: string
   name: string
   email: string
   nextAppointment: string | null

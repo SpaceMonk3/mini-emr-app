@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
+import { getUserById, getPrescriptionsByUserId } from '@/lib/db'
 import { getSessionUserId } from '@/lib/auth'
+import { timestampToDate } from '@/lib/firestore'
 import { calculateRefillDates, addMonths } from '@/lib/dateUtils'
 
 export async function GET(request: NextRequest) {
@@ -10,24 +11,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        prescriptions: true,
-      },
-    })
-
+    const user = await getUserById(userId)
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
+
+    const prescriptions = await getPrescriptionsByUserId(userId)
 
     const now = new Date()
     const threeMonthsFromNow = addMonths(now, 3)
 
     // Calculate all upcoming refills for each prescription
-    const prescriptionsWithRefills = user.prescriptions.map(prescription => {
+    const prescriptionsWithRefills = prescriptions.map(prescription => {
+      const refillOn = timestampToDate(prescription.refillOn) || new Date()
       const refillDates = calculateRefillDates(
-        prescription.refillOn,
+        refillOn,
         prescription.refillSchedule,
         threeMonthsFromNow
       )

@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import bcrypt from 'bcryptjs'
-import { prisma } from './db'
+import { getUserById } from './db'
 import { cookies } from 'next/headers'
 
 const SESSION_COOKIE_NAME = 'zealthy_session'
@@ -14,12 +14,12 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash)
 }
 
-export async function createSession(userId: number): Promise<string> {
+export async function createSession(userId: string): Promise<string> {
   // Simple session: store user ID in cookie
-  return userId.toString()
+  return userId
 }
 
-export async function getSessionUserId(request?: NextRequest): Promise<number | null> {
+export async function getSessionUserId(request?: NextRequest): Promise<string | null> {
   let sessionId: string | undefined
 
   if (request) {
@@ -35,22 +35,15 @@ export async function getSessionUserId(request?: NextRequest): Promise<number | 
     return null
   }
 
-  const userId = parseInt(sessionId, 10)
-  if (isNaN(userId)) {
-    return null
-  }
-
   // Verify user still exists
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-  })
+  const user = await getUserById(sessionId)
 
-  return user ? userId : null
+  return user ? sessionId : null
 }
 
-export async function setSessionCookie(userId: number): Promise<void> {
+export async function setSessionCookie(userId: string): Promise<void> {
   const cookieStore = await cookies()
-  cookieStore.set(SESSION_COOKIE_NAME, userId.toString(), {
+  cookieStore.set(SESSION_COOKIE_NAME, userId, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',

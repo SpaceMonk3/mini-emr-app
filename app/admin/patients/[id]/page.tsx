@@ -8,18 +8,18 @@ import AppointmentList from '@/components/admin/AppointmentList'
 import PrescriptionList from '@/components/admin/PrescriptionList'
 
 interface Patient {
-  id: number
+  id: string
   name: string
   email: string
   appointments: Array<{
-    id: number
+    id: string
     provider: string
     datetime: string
     repeatSchedule: string | null
     endDate: string | null
   }>
   prescriptions: Array<{
-    id: number
+    id: string
     medication: string
     dosage: string
     quantity: number
@@ -35,7 +35,7 @@ export default function PatientDetailPage() {
   const [loading, setLoading] = useState(true)
   const [editingPatient, setEditingPatient] = useState(false)
 
-  const patientId = parseInt(params.id as string, 10)
+  const patientId = params.id as string
 
   const fetchPatient = useCallback(async () => {
     try {

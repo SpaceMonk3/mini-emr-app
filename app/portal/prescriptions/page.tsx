@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { format } from 'date-fns'
 import { getSessionUserId } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { getUserById, getPrescriptionsByUserId } from '@/lib/db'
 import { calculateRefillDates, addMonths } from '@/lib/dateUtils'
 import Navbar from '@/components/portal/Navbar'
 
@@ -11,24 +11,21 @@ async function getPrescriptions() {
     redirect('/')
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    include: {
-      prescriptions: true,
-    },
-  })
-
+  const user = await getUserById(userId)
   if (!user) {
     redirect('/')
   }
+
+  const prescriptions = await getPrescriptionsByUserId(userId)
 
   const now = new Date()
   const threeMonthsFromNow = addMonths(now, 3)
 
   // Calculate all upcoming refills for each prescription
-  const prescriptionsWithRefills = user.prescriptions.map(prescription => {
+  const prescriptionsWithRefills = prescriptions.map(prescription => {
+    const refillOn = prescription.refillOn instanceof Date ? prescription.refillOn : new Date(prescription.refillOn)
     const refillDates = calculateRefillDates(
-      prescription.refillOn,
+      refillOn,
       prescription.refillSchedule,
       threeMonthsFromNow
     )

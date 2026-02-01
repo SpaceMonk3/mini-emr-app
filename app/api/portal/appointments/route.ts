@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
+import { getUserById, getAppointmentsByUserId } from '@/lib/db'
 import { getSessionUserId } from '@/lib/auth'
+import { timestampToDate } from '@/lib/firestore'
 import { calculateRecurringAppointments, addMonths } from '@/lib/dateUtils'
 
 export async function GET(request: NextRequest) {
@@ -10,27 +11,25 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        appointments: true,
-      },
-    })
-
+    const user = await getUserById(userId)
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
+
+    const appointments = await getAppointmentsByUserId(userId)
 
     const now = new Date()
     const threeMonthsFromNow = addMonths(now, 3)
 
     // Calculate all upcoming appointments
     const allAppointments: Array<{ date: Date; provider: string; repeatSchedule: string | null }> = []
-    for (const apt of user.appointments) {
+    for (const apt of appointments) {
+      const aptDate = timestampToDate(apt.datetime) || new Date()
+      const endDate = apt.endDate ? timestampToDate(apt.endDate) : null
       const recurringDates = calculateRecurringAppointments(
-        apt.datetime,
+        aptDate,
         apt.repeatSchedule,
-        apt.endDate,
+        endDate,
         threeMonthsFromNow
       )
       for (const date of recurringDates) {

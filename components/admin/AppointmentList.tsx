@@ -5,7 +5,7 @@ import { useState } from 'react'
 import AppointmentForm from './AppointmentForm'
 
 interface Appointment {
-  id: number
+  id: string
   provider: string
   datetime: string
   repeatSchedule: string | null
@@ -14,20 +14,20 @@ interface Appointment {
 
 interface AppointmentListProps {
   appointments: Appointment[]
-  userId: number
+  userId: string
   onUpdate: () => void
 }
 
 export default function AppointmentList({ appointments, userId, onUpdate }: AppointmentListProps) {
-  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
 
-  const handleEdit = (id: number) => {
+  const handleEdit = (id: string) => {
     setEditingId(id)
     setShowForm(true)
   }
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this appointment?')) return
 
     try {
@@ -43,7 +43,7 @@ export default function AppointmentList({ appointments, userId, onUpdate }: Appo
   }
 
   const handleSubmit = async (data: {
-    userId: number
+    userId: string
     provider: string
     datetime: string
     repeatSchedule: string | null

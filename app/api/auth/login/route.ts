@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
+import { getUserByEmail } from '@/lib/db'
 import { verifyPassword, setSessionCookie } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
@@ -14,9 +14,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email },
-    })
+    const user = await getUserByEmail(email)
 
     if (!user) {
       return NextResponse.json(
@@ -40,7 +38,8 @@ export async function POST(request: NextRequest) {
     })
 
     // Set cookie in response
-    response.cookies.set('zealthy_session', user.id.toString(), {
+    await setSessionCookie(user.id)
+    response.cookies.set('zealthy_session', user.id, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

@@ -4,15 +4,15 @@ import { useState, useEffect } from 'react'
 
 interface AppointmentFormProps {
   appointment?: {
-    id: number
+    id: string
     provider: string
     datetime: string
     repeatSchedule: string | null
     endDate: string | null
   }
-  userId: number
+  userId: string
   onSubmit: (data: {
-    userId: number
+    userId: string
     provider: string
     datetime: string
     repeatSchedule: string | null

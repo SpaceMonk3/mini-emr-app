@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { getSessionUserId } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { getUserById, getAppointmentsByUserId, getPrescriptionsByUserId } from '@/lib/db'
 import { calculateRecurringAppointments, calculateRefillDates, getAppointmentsInNext7Days, getRefillsInNext7Days, addMonths } from '@/lib/dateUtils'
 import DashboardSummary from '@/components/portal/DashboardSummary'
 import Navbar from '@/components/portal/Navbar'
@@ -11,28 +11,26 @@ async function getDashboardData() {
     redirect('/')
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    include: {
-      appointments: true,
-      prescriptions: true,
-    },
-  })
-
+  const user = await getUserById(userId)
   if (!user) {
     redirect('/')
   }
+
+  const appointments = await getAppointmentsByUserId(userId)
+  const prescriptions = await getPrescriptionsByUserId(userId)
 
   const now = new Date()
   const threeMonthsFromNow = addMonths(now, 3)
 
   // Calculate all upcoming appointments
   const allAppointments: Array<{ date: Date; provider: string; repeatSchedule: string | null }> = []
-  for (const apt of user.appointments) {
+  for (const apt of appointments) {
+    const aptDate = apt.datetime instanceof Date ? apt.datetime : new Date(apt.datetime)
+    const endDate = apt.endDate ? (apt.endDate instanceof Date ? apt.endDate : new Date(apt.endDate)) : null
     const recurringDates = calculateRecurringAppointments(
-      apt.datetime,
+      aptDate,
       apt.repeatSchedule,
-      apt.endDate,
+      endDate,
       threeMonthsFromNow
     )
     for (const date of recurringDates) {
@@ -55,9 +53,10 @@ async function getDashboardData() {
 
   // Calculate all upcoming refills
   const allRefills: Array<{ date: Date; medication: string; dosage: string; quantity: number }> = []
-  for (const prescription of user.prescriptions) {
+  for (const prescription of prescriptions) {
+    const refillOn = prescription.refillOn instanceof Date ? prescription.refillOn : new Date(prescription.refillOn)
     const refillDates = calculateRefillDates(
-      prescription.refillOn,
+      refillOn,
       prescription.refillSchedule,
       threeMonthsFromNow
     )

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
+import { createPrescription, getUserById } from '@/lib/db'
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,26 +13,40 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const prescription = await prisma.prescription.create({
-      data: {
-        userId: parseInt(userId, 10),
-        medication,
-        dosage,
-        quantity: parseInt(quantity, 10),
-        refillOn: new Date(refillOn),
-        refillSchedule,
-      },
-    })
-
-    return NextResponse.json(prescription, { status: 201 })
-  } catch (error: any) {
-    console.error('Error creating prescription:', error)
-    if (error.code === 'P2003') {
+    // Verify user exists
+    const user = await getUserById(userId)
+    if (!user) {
       return NextResponse.json(
         { error: 'Invalid user ID' },
         { status: 400 }
       )
     }
+
+    const prescription = await createPrescription({
+      userId,
+      medication,
+      dosage,
+      quantity: parseInt(quantity, 10),
+      refillOn,
+      refillSchedule,
+    })
+
+    // Convert dates to ISO strings for response
+    const response = {
+      id: prescription.id,
+      userId: prescription.userId,
+      medication: prescription.medication,
+      dosage: prescription.dosage,
+      quantity: prescription.quantity,
+      refillOn: prescription.refillOn instanceof Date ? prescription.refillOn.toISOString() : prescription.refillOn,
+      refillSchedule: prescription.refillSchedule,
+      createdAt: prescription.createdAt instanceof Date ? prescription.createdAt.toISOString() : prescription.createdAt,
+      updatedAt: prescription.updatedAt instanceof Date ? prescription.updatedAt.toISOString() : prescription.updatedAt,
+    }
+
+    return NextResponse.json(response, { status: 201 })
+  } catch (error: any) {
+    console.error('Error creating prescription:', error)
     return NextResponse.json(
       { error: 'Failed to create prescription' },
       { status: 500 }
