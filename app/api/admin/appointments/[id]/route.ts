@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAppointmentById, updateAppointment, deleteAppointment } from '@/lib/db'
+import { timestampToDate } from '@/lib/firestore'
 
 export async function PUT(
   request: NextRequest,
@@ -26,15 +27,20 @@ export async function PUT(
     const appointment = await updateAppointment(id, updateData)
 
     // Convert dates to ISO strings for response
+    const datetimeDate = timestampToDate(appointment.datetime)
+    const endDateDate = appointment.endDate ? timestampToDate(appointment.endDate) : null
+    const createdAtDate = timestampToDate(appointment.createdAt)
+    const updatedAtDate = timestampToDate(appointment.updatedAt)
+
     const response = {
       id: appointment.id,
       userId: appointment.userId,
       provider: appointment.provider,
-      datetime: appointment.datetime instanceof Date ? appointment.datetime.toISOString() : appointment.datetime,
+      datetime: datetimeDate ? datetimeDate.toISOString() : null,
       repeatSchedule: appointment.repeatSchedule,
-      endDate: appointment.endDate ? (appointment.endDate instanceof Date ? appointment.endDate.toISOString() : appointment.endDate) : null,
-      createdAt: appointment.createdAt instanceof Date ? appointment.createdAt.toISOString() : appointment.createdAt,
-      updatedAt: appointment.updatedAt instanceof Date ? appointment.updatedAt.toISOString() : appointment.updatedAt,
+      endDate: endDateDate ? endDateDate.toISOString() : null,
+      createdAt: createdAtDate ? createdAtDate.toISOString() : null,
+      updatedAt: updatedAtDate ? updatedAtDate.toISOString() : null,
     }
 
     return NextResponse.json(response)

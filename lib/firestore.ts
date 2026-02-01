@@ -11,14 +11,16 @@ export const COLLECTIONS = {
 } as const
 
 // Get Firestore instance
-export const db = getFirestoreInstance()
+function getDb() {
+  return getFirestoreInstance()
+}
 
-// Collection references
-export const usersCollection = (): CollectionReference => db.collection(COLLECTIONS.USERS)
-export const appointmentsCollection = (): CollectionReference => db.collection(COLLECTIONS.APPOINTMENTS)
-export const prescriptionsCollection = (): CollectionReference => db.collection(COLLECTIONS.PRESCRIPTIONS)
-export const medicationsCollection = (): CollectionReference => db.collection(COLLECTIONS.MEDICATIONS)
-export const dosagesCollection = (): CollectionReference => db.collection(COLLECTIONS.DOSAGES)
+// Collection references 
+export const usersCollection = (): CollectionReference => getDb().collection(COLLECTIONS.USERS)
+export const appointmentsCollection = (): CollectionReference => getDb().collection(COLLECTIONS.APPOINTMENTS)
+export const prescriptionsCollection = (): CollectionReference => getDb().collection(COLLECTIONS.PRESCRIPTIONS)
+export const medicationsCollection = (): CollectionReference => getDb().collection(COLLECTIONS.MEDICATIONS)
+export const dosagesCollection = (): CollectionReference => getDb().collection(COLLECTIONS.DOSAGES)
 
 // Helper to convert Firestore Timestamp to Date
 export function timestampToDate(timestamp: Timestamp | Date | null | undefined): Date | null {
